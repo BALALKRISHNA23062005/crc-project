@@ -105,6 +105,40 @@ LOGIN_REDIRECT_URL = 'event_list'
 RAZORPAY_KEY_ID = 'rzp_test_Th1WKuESF8aM2D'
 RAZORPAY_KEY_SECRET = 'Q4T2EumaExvMixJvcZo9xs7z'
 
+import os
+import dj_database_url
+
+# Near the top, keep DEBUG as is for now but make it configurable:
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+
+ALLOWED_HOSTS = ['*']  # We'll tighten this after deployment
+
+# Update MIDDLEWARE - add whitenoise right after SecurityMiddleware:
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# Add near the bottom, for static files:
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Replace your DATABASES setting with this:
+DATABASES = {
+    'default': dj_database_url.config(default=f'sqlite:///{BASE_DIR}/db.sqlite3')
+}
+
+# Move your Razorpay keys to environment variables instead of hardcoded:
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID')
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET')
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
