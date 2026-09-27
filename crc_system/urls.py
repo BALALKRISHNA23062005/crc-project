@@ -16,9 +16,14 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from events.views import seed_data
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('events/', include('events.urls')),
     path('members/', include('members.urls')),
+    path('seed/', seed_data),
 ]
+
+
+
