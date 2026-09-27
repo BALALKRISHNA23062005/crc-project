@@ -83,3 +83,15 @@ def payment_success(request, registration_id):
     registration.save()
 
     return render(request, 'events/payment_success.html', {'registration': registration})
+
+def event_list(request):
+    events = Event.objects.all()
+    event_data = []
+    for event in events:
+        registered_count = Registration.objects.filter(event=event).count()
+        spots_left = event.max_participants - registered_count
+        event_data.append({
+            'event': event,
+            'spots_left': spots_left
+        })
+    return render(request, 'events/event_list.html', {'event_data': event_data})

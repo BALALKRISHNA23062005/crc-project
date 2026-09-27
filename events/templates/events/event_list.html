@@ -1,3 +1,5 @@
+<h1>Upcoming Runs</h1>
+
 {% if user.is_authenticated %}
   <p>Welcome, {{ user.username }}!
     <form method="post" action="/members/logout/" style="display:inline;">
@@ -8,3 +10,19 @@
 {% else %}
   <p><a href="/members/login/">Login</a> | <a href="/members/signup/">Sign Up</a></p>
 {% endif %}
+
+<p><a href="/events/register/">Register for a Run</a></p>
+<ul>
+  {% for item in event_data %}
+    <li>
+      <strong>{{ item.event.title }}</strong> — {{ item.event.date }} at {{ item.event.location }}
+      {% if item.spots_left > 0 %}
+        ({{ item.spots_left }} spots left)
+      {% else %}
+        (FULL)
+      {% endif %}
+    </li>
+  {% empty %}
+    <li>No upcoming events yet.</li>
+  {% endfor %}
+</ul>
