@@ -1,6 +1,10 @@
 <h1>Register for a Run</h1>
 <form method="post">
   {% csrf_token %}
-  {{ form.as_p }}
+  <select name="event" required>
+    {% for event in events %}
+      <option value="{{ event.id }}">{{ event.title }} — {{ event.date }}</option>
+    {% endfor %}
+  </select>
   <button type="submit">Register</button>
 </form>

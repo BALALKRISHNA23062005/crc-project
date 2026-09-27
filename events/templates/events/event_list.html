@@ -1,12 +1,10 @@
-<h1>Upcoming Runs</h1>
-<p><a href="/events/register/">Register for a Run</a></p>
-<ul>
-  {% for event in events %}
-    <li>
-      <strong>{{ event.title }}</strong> — {{ event.date }} at {{ event.location }}
-      (Max: {{ event.max_participants }})
-    </li>
-  {% empty %}
-    <li>No upcoming events yet.</li>
-  {% endfor %}
-</ul>
+{% if user.is_authenticated %}
+  <p>Welcome, {{ user.username }}!
+    <form method="post" action="/members/logout/" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit">Logout</button>
+    </form>
+  </p>
+{% else %}
+  <p><a href="/members/login/">Login</a> | <a href="/members/signup/">Sign Up</a></p>
+{% endif %}
