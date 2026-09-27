@@ -1,0 +1,12 @@
+<h1>Upcoming Runs</h1>
+<p><a href="/events/register/">Register for a Run</a></p>
+<ul>
+  {% for event in events %}
+    <li>
+      <strong>{{ event.title }}</strong> — {{ event.date }} at {{ event.location }}
+      (Max: {{ event.max_participants }})
+    </li>
+  {% empty %}
+    <li>No upcoming events yet.</li>
+  {% endfor %}
+</ul>
