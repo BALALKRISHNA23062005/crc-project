@@ -1,7 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
 {% if already_checked_in %}
-  <h1>Already Checked In</h1>
-  <p>{{ registration.member.name }} was already marked present for {{ registration.event.title }}.</p>
+  <div class="alert alert-warning">
+    <h2>Already Checked In</h2>
+    <p>{{ registration.member.name }} was already marked present for {{ registration.event.title }}.</p>
+  </div>
 {% else %}
-  <h1>Checked In!</h1>
-  <p>Welcome, {{ registration.member.name }}! You're marked present for {{ registration.event.title }}.</p>
+  <div class="alert alert-success">
+    <h2>Checked In!</h2>
+    <p>Welcome, {{ registration.member.name }}! You're marked present for {{ registration.event.title }}.</p>
+  </div>
 {% endif %}
+{% endblock %}

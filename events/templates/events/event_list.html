@@ -1,28 +1,37 @@
-<h1>Upcoming Runs</h1>
+{% extends 'base.html' %}
+{% block content %}
 
 {% if user.is_authenticated %}
   <p>Welcome, {{ user.username }}!
     <form method="post" action="/members/logout/" style="display:inline;">
       {% csrf_token %}
-      <button type="submit">Logout</button>
+      <button type="submit" class="btn btn-sm btn-outline-danger">Logout</button>
     </form>
   </p>
 {% else %}
-  <p><a href="/members/login/">Login</a> | <a href="/members/signup/">Sign Up</a></p>
+  <p><a href="/members/login/" class="btn btn-primary btn-sm">Login</a> <a href="/events/register/" class="btn btn-outline-primary btn-sm">Sign Up</a></p>
 {% endif %}
 
-<p><a href="/events/register/">Register for a Run</a></p>
-<ul>
+<a href="/events/register/" class="btn btn-success mb-3">Register for a Run</a>
+
+<div class="row">
   {% for item in event_data %}
-    <li>
-      <strong>{{ item.event.title }}</strong> — {{ item.event.date }} at {{ item.event.location }}
-      {% if item.spots_left > 0 %}
-        ({{ item.spots_left }} spots left)
-      {% else %}
-        (FULL)
-      {% endif %}
-    </li>
+    <div class="col-md-4 mb-3">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">{{ item.event.title }}</h5>
+          <p class="card-text">{{ item.event.date }} — {{ item.event.location }}</p>
+          {% if item.spots_left > 0 %}
+            <span class="badge bg-success">{{ item.spots_left }} spots left</span>
+          {% else %}
+            <span class="badge bg-danger">FULL</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   {% empty %}
-    <li>No upcoming events yet.</li>
+    <p>No upcoming events yet.</p>
   {% endfor %}
-</ul>
+</div>
+
+{% endblock %}

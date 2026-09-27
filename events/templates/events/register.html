@@ -1,10 +1,13 @@
-<h1>Register for a Run</h1>
-<form method="post">
+{% extends 'base.html' %}
+{% block content %}
+<h2>Register for a Run</h2>
+<form method="post" class="col-md-6">
   {% csrf_token %}
-  <select name="event" required>
+  <select name="event" required class="form-select mb-3">
     {% for event in events %}
       <option value="{{ event.id }}">{{ event.title }} — {{ event.date }}</option>
     {% endfor %}
   </select>
-  <button type="submit">Register</button>
+  <button type="submit" class="btn btn-success">Register</button>
 </form>
+{% endblock %}
