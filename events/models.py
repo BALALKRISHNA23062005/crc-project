@@ -21,5 +21,15 @@ class Registration(models.Model):
         default='pending'
     )
 
+class Attendance(models.Model):
+    registration = models.ForeignKey(Registration, on_delete=models.CASCADE)
+    checked_in_at = models.DateTimeField(auto_now_add=True)
+    
+class Payment(models.Model):
+    registration = models.ForeignKey(Registration, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=8, decimal_places=2)
+    transaction_id = models.CharField(max_length=100, blank=True)
+    paid_on = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
-        return f"{self.member.name} - {self.event.title}"
+        return f"Payment for {self.registration}"
