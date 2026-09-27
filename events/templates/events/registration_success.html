@@ -1,0 +1,6 @@
+<h1>You're Registered!</h1>
+<p>{{ registration.member.name }}, you're registered for <strong>{{ registration.event.title }}</strong>.</p>
+<p>Show this QR code at check-in:</p>
+<img src="/events/qr/{{ registration.id }}/" alt="Your QR Code">
+<p><a href="/events/pay/{{ registration.id }}/">Pay Registration Fee</a></p>
+<p><a href="/events/">Back to Events</a></p>

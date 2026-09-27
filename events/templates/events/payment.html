@@ -1,0 +1,19 @@
+<h1>Complete Your Payment</h1>
+<p>{{ registration.member.name }} — {{ registration.event.title }}</p>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var options = {
+        "key": "{{ razorpay_key }}",
+        "amount": "{{ amount }}",
+        "currency": "INR",
+        "order_id": "{{ order_id }}",
+        "name": "Checkerz Run Club",
+        "description": "Event Registration Fee",
+        "handler": function (response){
+            window.location.href = "/events/payment-success/{{ registration.id }}/?payment_id=" + response.razorpay_payment_id;
+        },
+    };
+    var rzp = new Razorpay(options);
+    rzp.open();
+</script>

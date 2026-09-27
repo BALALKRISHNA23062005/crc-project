@@ -1,0 +1,7 @@
+{% if already_checked_in %}
+  <h1>Already Checked In</h1>
+  <p>{{ registration.member.name }} was already marked present for {{ registration.event.title }}.</p>
+{% else %}
+  <h1>Checked In!</h1>
+  <p>Welcome, {{ registration.member.name }}! You're marked present for {{ registration.event.title }}.</p>
+{% endif %}

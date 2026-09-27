@@ -11,6 +11,8 @@ class Event(models.Model):
         return self.title
 
 
+import uuid
+
 class Registration(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
@@ -20,6 +22,15 @@ class Registration(models.Model):
         choices=[('pending', 'Pending'), ('paid', 'Paid')],
         default='pending'
     )
+    qr_code = models.CharField(max_length=36, unique=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.qr_code:
+            self.qr_code = str(uuid.uuid4())
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.member.name} - {self.event.title}"
 
 class Attendance(models.Model):
     registration = models.ForeignKey(Registration, on_delete=models.CASCADE)

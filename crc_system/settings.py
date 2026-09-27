@@ -102,6 +102,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LOGIN_REDIRECT_URL = 'event_list'
 
+RAZORPAY_KEY_ID = 'rzp_test_Th1WKuESF8aM2D'
+RAZORPAY_KEY_SECRET = 'Q4T2EumaExvMixJvcZo9xs7z'
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
