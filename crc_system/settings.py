@@ -28,6 +28,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-insecure-key')
 DEBUG = True
 
 ALLOWED_HOSTS = ['crc-project.onrender.com', 'localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['https://crc-project.onrender.com']
 
 
 # Application definition
