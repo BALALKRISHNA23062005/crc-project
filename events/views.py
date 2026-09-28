@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .models import Event, Registration
 from members.models import Member
-from .models import Event, Registration, Attendance, Payment    
+from .models import Event, Registration, Attendance, Payment   
+from django.shortcuts import render, redirect, get_object_or_404 
 
 def event_list(request):
     events = Event.objects.all()
