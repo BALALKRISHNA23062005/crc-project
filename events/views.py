@@ -96,17 +96,3 @@ def event_list(request):
         })
     return render(request, 'events/event_list.html', {'event_data': event_data})
 
-from django.http import HttpResponse
-from django.contrib.auth.models import User
-
-def seed_data(request):
-    if not Event.objects.exists():
-        Event.objects.create(
-            title="Bead Your Laces",
-            date="2026-10-15",
-            location="Unkal Lake",
-            max_participants=50
-        )
-    if not User.objects.filter(is_superuser=True).exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'ChangeThisPassword123')
-    return HttpResponse("Seed data created successfully.")
