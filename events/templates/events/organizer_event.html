@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ event.title }} registrations</h1>
+<p>{{ event.date }} — {{ event.location }}</p>
+
+<dl class="row">
+    <dt class="col-sm-3">Registrations</dt>
+    <dd class="col-sm-9">{{ registration_count }}</dd>
+    <dt class="col-sm-3">Paid</dt>
+    <dd class="col-sm-9">{{ paid_count }}</dd>
+    <dt class="col-sm-3">Checked in</dt>
+    <dd class="col-sm-9">{{ checked_in_count }}</dd>
+</dl>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Member</th>
+            <th>Email</th>
+            <th>Payment</th>
+            <th>Attendance</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for registration in registrations %}
+        <tr>
+            <td>{{ registration.member.name }}</td>
+            <td>{{ registration.member.email }}</td>
+            <td>{{ registration.get_payment_status_display }}</td>
+            <td>{% if registration.checked_in %}Checked in{% else %}Not checked in{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No registrations yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a class="btn btn-outline-secondary" href="{% url 'event_list' %}">Back to events</a>
+{% endblock %}

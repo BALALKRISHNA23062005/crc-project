@@ -4,6 +4,7 @@ from io import BytesIO
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -27,6 +28,25 @@ def my_registrations(request):
         member__user=request.user,
     ).select_related('event').order_by('-registered_on')
     return render(request, 'events/my_registrations.html', {'registrations': registrations})
+
+
+@login_required
+def organizer_event(request, event_id):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only organizers can view event registrations.")
+
+    event = get_object_or_404(Event, id=event_id)
+    registrations = Registration.objects.filter(event=event).select_related('member').annotate(
+        checked_in=Exists(Attendance.objects.filter(registration_id=OuterRef('pk'))),
+    ).order_by('registered_on')
+    context = {
+        'event': event,
+        'registrations': registrations,
+        'registration_count': registrations.count(),
+        'paid_count': registrations.filter(payment_status='paid').count(),
+        'checked_in_count': Attendance.objects.filter(registration__event=event).count(),
+    }
+    return render(request, 'events/organizer_event.html', context)
 
 
 @login_required(login_url='/members/login/')

@@ -26,6 +26,9 @@
           {% else %}
             <span class="badge bg-danger">FULL</span>
           {% endif %}
+          {% if user.is_staff %}
+            <p class="mt-2 mb-0"><a href="{% url 'organizer_event' item.event.id %}">Manage registrations</a></p>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from members.models import Member
-from .models import Event, Payment, Registration
+from .models import Attendance, Event, Payment, Registration
 
 
 class EventFeeTests(TestCase):
@@ -138,3 +138,51 @@ class MyRegistrationsTests(TestCase):
 			f"{reverse('login')}?next={reverse('my_registrations')}",
 			fetch_redirect_response=False,
 		)
+
+
+class OrganizerEventTests(TestCase):
+	def setUp(self):
+		self.staff_user = User.objects.create_user(
+			username='organizer', password='password', is_staff=True,
+		)
+		self.member_user = User.objects.create_user(username='runner', password='password')
+		self.member = Member.objects.create(
+			user=self.member_user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		self.event = Event.objects.create(
+			title='Club run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+		)
+		self.paid_registration = Registration.objects.create(
+			member=self.member,
+			event=self.event,
+			payment_status='paid',
+		)
+		Registration.objects.create(member=self.member, event=self.event)
+
+	def test_staff_sees_registrations_status_and_counts(self):
+		Attendance.objects.create(registration=self.paid_registration)
+		self.client.force_login(self.staff_user)
+
+		response = self.client.get(reverse('organizer_event', args=[self.event.id]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, 'Runner')
+		self.assertContains(response, 'runner@example.com')
+		self.assertContains(response, 'Registrations</dt>\n    <dd class="col-sm-9">2')
+		self.assertContains(response, 'Paid</dt>\n    <dd class="col-sm-9">1')
+		self.assertContains(response, 'Checked in</dt>\n    <dd class="col-sm-9">1')
+		self.assertContains(response, 'Checked in')
+		self.assertContains(response, 'Not checked in')
+
+	def test_non_staff_cannot_view_organizer_page(self):
+		self.client.force_login(self.member_user)
+
+		response = self.client.get(reverse('organizer_event', args=[self.event.id]))
+
+		self.assertEqual(response.status_code, 403)
