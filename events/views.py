@@ -23,23 +23,29 @@ def event_list(request):
 
 @login_required(login_url='/members/login/')
 def register_for_event(request):
-    member = Member.objects.get(user=request.user)
+    member = Member.objects.filter(user=request.user).first()
+    if member is None:
+        return HttpResponse(
+            "This account has no member profile. Please sign up with a member account to register.",
+            status=403,
+        )
     if request.method == 'POST':
-        event_id = request.POST.get('event')
-        event = Event.objects.get(id=event_id)
+        event = get_object_or_404(Event, id=request.POST.get('event'))
         registration = Registration.objects.create(member=member, event=event)
         return redirect('registration_success', registration_id=registration.id)
     events = Event.objects.all()
     return render(request, 'events/register.html', {'events': events})
 
 
+@login_required(login_url='/members/login/')
 def registration_success(request, registration_id):
-    registration = get_object_or_404(Registration, id=registration_id)
+    registration = get_object_or_404(Registration, id=registration_id, member__user=request.user)
     return render(request, 'events/registration_success.html', {'registration': registration})
 
 
+@login_required(login_url='/members/login/')
 def qr_code_image(request, registration_id):
-    registration = get_object_or_404(Registration, id=registration_id)
+    registration = get_object_or_404(Registration, id=registration_id, member__user=request.user)
     checkin_url = request.build_absolute_uri(f'/events/checkin/{registration.qr_code}/')
     qr = qrcode.make(checkin_url)
     buffer = BytesIO()
@@ -61,8 +67,9 @@ def checkin(request, qr_code):
     })
 
 
+@login_required(login_url='/members/login/')
 def initiate_payment(request, registration_id):
-    registration = get_object_or_404(Registration, id=registration_id)
+    registration = get_object_or_404(Registration, id=registration_id, member__user=request.user)
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
     amount_in_paise = 10000
     order = client.order.create({
@@ -80,8 +87,9 @@ def initiate_payment(request, registration_id):
     })
 
 
+@login_required(login_url='/members/login/')
 def payment_success(request, registration_id):
-    registration = get_object_or_404(Registration, id=registration_id)
+    registration = get_object_or_404(Registration, id=registration_id, member__user=request.user)
     payment_id = request.GET.get('razorpay_payment_id', '')
     order_id = request.GET.get('razorpay_order_id', '')
     signature = request.GET.get('razorpay_signature', '')
