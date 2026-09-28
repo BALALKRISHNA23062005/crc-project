@@ -76,3 +76,65 @@ class EventFeeTests(TestCase):
 		payment = Payment.objects.get(registration=registration)
 		self.assertEqual(payment.amount, Decimal('25.50'))
 		client.utility.verify_payment_signature.assert_called_once()
+
+
+class MyRegistrationsTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='runner', password='password')
+		self.member = Member.objects.create(
+			user=self.user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		self.other_user = User.objects.create_user(username='other', password='password')
+		self.other_member = Member.objects.create(
+			user=self.other_user,
+			name='Other Runner',
+			email='other@example.com',
+			phone='1234567891',
+		)
+		self.event = Event.objects.create(
+			title='Own event',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+			fee=Decimal('25.50'),
+		)
+		self.pending_registration = Registration.objects.create(
+			member=self.member,
+			event=self.event,
+		)
+		self.paid_registration = Registration.objects.create(
+			member=self.member,
+			event=self.event,
+			payment_status='paid',
+		)
+		self.other_event = Event.objects.create(
+			title='Other event',
+			date='2026-10-02',
+			location='Dharwad',
+			max_participants=10,
+		)
+		Registration.objects.create(member=self.other_member, event=self.other_event)
+		self.client.force_login(self.user)
+
+	def test_page_shows_only_own_registrations_and_pending_pay_link(self):
+		response = self.client.get(reverse('my_registrations'))
+
+		self.assertContains(response, 'Own event')
+		self.assertNotContains(response, 'Other event')
+		self.assertContains(response, reverse('qr_code_image', args=[self.pending_registration.id]))
+		self.assertContains(response, reverse('initiate_payment', args=[self.pending_registration.id]))
+		self.assertNotContains(response, reverse('initiate_payment', args=[self.paid_registration.id]))
+
+	def test_page_requires_login(self):
+		self.client.logout()
+
+		response = self.client.get(reverse('my_registrations'))
+
+		self.assertRedirects(
+			response,
+			f"{reverse('login')}?next={reverse('my_registrations')}",
+			fetch_redirect_response=False,
+		)

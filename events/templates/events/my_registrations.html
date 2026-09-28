@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>My Registrations</h1>
+{% if registrations %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Payment status</th>
+            <th>QR code</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for registration in registrations %}
+        <tr>
+            <td>{{ registration.event.title }}</td>
+            <td>{{ registration.event.date }}</td>
+            <td>{{ registration.get_payment_status_display }}</td>
+            <td><a href="{% url 'qr_code_image' registration.id %}">View QR</a></td>
+            <td>
+                {% if registration.payment_status == 'pending' %}
+                <a href="{% url 'initiate_payment' registration.id %}">Pay now</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have no registrations.</p>
+{% endif %}
+{% endblock %}

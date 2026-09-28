@@ -21,6 +21,14 @@ def event_list(request):
     return render(request, 'events/event_list.html', {'event_data': event_data})
 
 
+@login_required
+def my_registrations(request):
+    registrations = Registration.objects.filter(
+        member__user=request.user,
+    ).select_related('event').order_by('-registered_on')
+    return render(request, 'events/my_registrations.html', {'registrations': registrations})
+
+
 @login_required(login_url='/members/login/')
 def register_for_event(request):
     member = Member.objects.filter(user=request.user).first()
