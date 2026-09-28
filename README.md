@@ -11,14 +11,7 @@ Checkerz Run Club (CRC) needs a simple way to organize running events, register 
 - Signature-verified payment confirmation.
 - Staff-only QR check-in and event organizer roster with payment and attendance counts.
 - Django admin for managing members, events, registrations, payments, and attendance.
-
-## Screenshots
-
-Add current application screenshots in `docs/screenshots/` after review:
-
-- Events list: `docs/screenshots/events-list.png`
-- My registrations: `docs/screenshots/my-registrations.png`
-- Organizer roster: `docs/screenshots/organizer-roster.png`
+    
 
 ## Technology
 

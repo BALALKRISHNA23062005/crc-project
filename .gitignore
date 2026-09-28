@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 HANDOFF.md
 staticfiles/
+demo_data.py
