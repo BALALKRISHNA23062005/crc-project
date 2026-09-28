@@ -4,21 +4,25 @@ from .models import Event, Registration
 from members.models import Member
 from .models import Event, Registration, Attendance, Payment   
 from django.shortcuts import render, redirect, get_object_or_404 
+from django.http import HttpResponse, HttpResponseForbidden
+from django.contrib.auth.decorators import login_required
 
 def event_list(request):
     events = Event.objects.all()
     return render(request, 'events/event_list.html', {'events': events})
 
 @login_required(login_url='/members/login/')
-def register_for_event(request):
-    member = Member.objects.get(user=request.user)
-    if request.method == 'POST':
-        event_id = request.POST.get('event')
-        event = Event.objects.get(id=event_id)
-        registration = Registration.objects.create(member=member, event=event)
-        return redirect('registration_success', registration_id=registration.id)
-    events = Event.objects.all()
-    return render(request, 'events/register.html', {'events': events})
+def checkin(request, qr_code):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only organizers can check members in.")
+    registration = get_object_or_404(Registration, qr_code=qr_code)
+    already_checked_in = Attendance.objects.filter(registration=registration).exists()
+    if not already_checked_in:
+        Attendance.objects.create(registration=registration)
+    return render(request, 'events/checkin_result.html', {
+        'registration': registration,
+        'already_checked_in': already_checked_in
+    })
 
 def registration_success(request, registration_id):
     registration = Registration.objects.get(id=registration_id)
