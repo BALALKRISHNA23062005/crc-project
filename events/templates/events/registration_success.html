@@ -5,6 +5,12 @@
 <p>Show this QR code at check-in:</p>
 <img src="/events/qr/{{ registration.id }}/" alt="Your QR Code" class="mb-3">
 <br>
+{% if registration.event.fee == 0 %}
+<p>Payment: Not applicable (free event).</p>
+{% elif registration.payment_status == 'paid' %}
+<p>Payment: Paid.</p>
+{% else %}
 <a href="/events/pay/{{ registration.id }}/" class="btn btn-warning">Pay Registration Fee</a>
+{% endif %}
 <a href="/events/" class="btn btn-outline-secondary">Back to Events</a>
 {% endblock %}

@@ -1,3 +1,78 @@
-from django.test import TestCase
+from decimal import Decimal
+from unittest.mock import patch
 
-# Create your tests here.
+from django.contrib.auth.models import User
+from django.test import TestCase
+from django.urls import reverse
+
+from members.models import Member
+from .models import Event, Payment, Registration
+
+
+class EventFeeTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='runner', password='password')
+		self.member = Member.objects.create(
+			user=self.user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		self.event = Event.objects.create(
+			title='Run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+			fee=Decimal('25.50'),
+		)
+		self.client.force_login(self.user)
+
+	def test_free_event_registration_is_paid_and_shows_payment_not_applicable(self):
+		self.event.fee = Decimal('0.00')
+		self.event.save()
+
+		response = self.client.post(
+			reverse('register_for_event'),
+			{'event': self.event.id},
+			follow=True,
+		)
+
+		registration = Registration.objects.get(member=self.member, event=self.event)
+		self.assertEqual(registration.payment_status, 'paid')
+		self.assertContains(response, 'Payment: Not applicable (free event).')
+		self.assertNotContains(response, 'Pay Registration Fee')
+
+	@patch('events.views.razorpay.Client')
+	def test_initiate_payment_uses_event_fee_in_paise(self, client_class):
+		registration = Registration.objects.create(member=self.member, event=self.event)
+		client = client_class.return_value
+		client.order.create.return_value = {'id': 'order_test'}
+
+		response = self.client.get(reverse('initiate_payment', args=[registration.id]))
+
+		client.order.create.assert_called_once_with({
+			'amount': 2550,
+			'currency': 'INR',
+			'payment_capture': 1,
+		})
+		self.assertEqual(response.context['amount'], 2550)
+
+	@patch('events.views.razorpay.Client')
+	def test_payment_success_records_event_fee(self, client_class):
+		registration = Registration.objects.create(
+			member=self.member,
+			event=self.event,
+			razorpay_order_id='order_test',
+		)
+		client = client_class.return_value
+
+		response = self.client.get(reverse('payment_success', args=[registration.id]), {
+			'razorpay_payment_id': 'payment_test',
+			'razorpay_order_id': 'order_test',
+			'razorpay_signature': 'signature_test',
+		})
+
+		self.assertEqual(response.status_code, 200)
+		payment = Payment.objects.get(registration=registration)
+		self.assertEqual(payment.amount, Decimal('25.50'))
+		client.utility.verify_payment_signature.assert_called_once()

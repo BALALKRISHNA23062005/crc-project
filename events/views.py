@@ -37,7 +37,12 @@ def register_for_event(request):
         elif Registration.objects.filter(event=event).count() >= event.max_participants:
             error = "Sorry, this event is full."
         else:
-            registration = Registration.objects.create(member=member, event=event)
+            payment_status = 'paid' if event.fee == 0 else 'pending'
+            registration = Registration.objects.create(
+                member=member,
+                event=event,
+                payment_status=payment_status,
+            )
             return redirect('registration_success', registration_id=registration.id)
     events = Event.objects.all()
     return render(request, 'events/register.html', {'events': events, 'error': error})
@@ -76,8 +81,13 @@ def checkin(request, qr_code):
 @login_required(login_url='/members/login/')
 def initiate_payment(request, registration_id):
     registration = get_object_or_404(Registration, id=registration_id, member__user=request.user)
+    if registration.event.fee == 0:
+        registration.payment_status = 'paid'
+        registration.save(update_fields=['payment_status'])
+        return redirect('registration_success', registration_id=registration.id)
+
     client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    amount_in_paise = 10000
+    amount_in_paise = int(registration.event.fee * 100)
     order = client.order.create({
         'amount': amount_in_paise,
         'currency': 'INR',
@@ -116,7 +126,7 @@ def payment_success(request, registration_id):
     if registration.payment_status != 'paid':
         Payment.objects.create(
             registration=registration,
-            amount=100.00,
+            amount=registration.event.fee,
             transaction_id=payment_id,
         )
         registration.payment_status = 'paid'

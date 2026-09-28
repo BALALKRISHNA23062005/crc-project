@@ -7,6 +7,7 @@ class Event(models.Model):
     date = models.DateField()
     location = models.CharField(max_length=200)
     max_participants = models.IntegerField()
+    fee = models.DecimalField(max_digits=8, decimal_places=2, default=0)
 
     def __str__(self):
         return self.title
