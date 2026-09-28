@@ -1,9 +1,11 @@
 from decimal import Decimal
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from members.models import Member
 from .models import Attendance, Event, Payment, Registration
@@ -186,3 +188,25 @@ class OrganizerEventTests(TestCase):
 		response = self.client.get(reverse('organizer_event', args=[self.event.id]))
 
 		self.assertEqual(response.status_code, 403)
+
+
+class EventListTests(TestCase):
+	def test_event_list_only_shows_today_and_future_events(self):
+		today = timezone.localdate()
+		Event.objects.create(
+			title='Past run',
+			date=today - timedelta(days=1),
+			location='Hubli',
+			max_participants=10,
+		)
+		Event.objects.create(
+			title='Upcoming run',
+			date=today,
+			location='Dharwad',
+			max_participants=10,
+		)
+
+		response = self.client.get(reverse('event_list'))
+
+		self.assertNotContains(response, 'Past run')
+		self.assertContains(response, 'Upcoming run')

@@ -7,13 +7,14 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 
 from members.models import Member
 from .models import Event, Registration, Attendance, Payment
 
 
 def event_list(request):
-    events = Event.objects.all()
+    events = Event.objects.filter(date__gte=timezone.localdate())
     event_data = []
     for event in events:
         registered_count = Registration.objects.filter(event=event).count()
