@@ -103,6 +103,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LOGIN_REDIRECT_URL = 'event_list'
+LOGIN_URL = '/members/login/'
 
 RAZORPAY_KEY_ID = 'rzp_test_Th1WKuESF8aM2D'
 RAZORPAY_KEY_SECRET = 'Q4T2EumaExvMixJvcZo9xs7z'

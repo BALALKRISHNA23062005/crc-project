@@ -1,3 +1,4 @@
 # Agent Log
 
 - Task 1: Added event fees, fee-based Razorpay amounts, and free-event payment handling. Files: `events/models.py`, `events/views.py`, `events/templates/events/registration_success.html`, `events/tests.py`, `events/migrations/0006_event_fee.py`. Manual check: in local `/admin/events/event/`, set an event fee; register for a free event and confirm the success page says payment is not applicable, then register for a paid event and confirm its checkout amount matches the fee.
+- Task 2: Added shared navigation, the `/` redirect, and the configured login URL. Files: `templates/base.html`, `crc_system/urls.py`, `crc_system/settings.py`, `members/tests.py`. Manual check: visit `/` while logged out and confirm it opens `/events/` with Login and Sign Up; log in and confirm Logout appears as a form submission button.

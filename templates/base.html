@@ -6,8 +6,21 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="/events/">Checkerz Run Club</a>
+        <div class="container d-flex justify-content-between">
+            <a class="navbar-brand" href="{% url 'event_list' %}">Checkerz Run Club</a>
+            <div class="d-flex align-items-center gap-3">
+                <a class="nav-link text-light" href="{% url 'event_list' %}">Events</a>
+                <a class="nav-link text-light" href="/events/my-registrations/">My Registrations</a>
+                {% if user.is_authenticated %}
+                <form action="{% url 'logout' %}" method="post" class="mb-0">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
+                </form>
+                {% else %}
+                <a class="nav-link text-light" href="{% url 'login' %}">Login</a>
+                <a class="nav-link text-light" href="{% url 'signup' %}">Sign Up</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
     <div class="container">
