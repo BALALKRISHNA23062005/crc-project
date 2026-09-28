@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -105,8 +107,6 @@ LOGIN_REDIRECT_URL = 'event_list'
 RAZORPAY_KEY_ID = 'rzp_test_Th1WKuESF8aM2D'
 RAZORPAY_KEY_SECRET = 'Q4T2EumaExvMixJvcZo9xs7z'
 
-import os
-import dj_database_url
 
 # Near the top, keep DEBUG as is for now but make it configurable:
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
