@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from razorpay.errors import SignatureVerificationError
 
 from members.models import Member
 from .models import Attendance, Event, Payment, Registration
@@ -210,3 +211,170 @@ class EventListTests(TestCase):
 
 		self.assertNotContains(response, 'Past run')
 		self.assertContains(response, 'Upcoming run')
+
+
+class RegistrationBlockingTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='runner', password='password')
+		self.member = Member.objects.create(
+			user=self.user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		self.event = Event.objects.create(
+			title='Club run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=1,
+		)
+		self.client.force_login(self.user)
+
+	def test_duplicate_registration_shows_friendly_error(self):
+		Registration.objects.create(member=self.member, event=self.event)
+
+		response = self.client.post(reverse('register_for_event'), {'event': self.event.id})
+
+		self.assertEqual(response.context['error'], "You're already registered for this event.")
+		self.assertEqual(Registration.objects.filter(event=self.event).count(), 1)
+
+	def test_full_event_shows_friendly_error(self):
+		other_user = User.objects.create_user(username='other', password='password')
+		other_member = Member.objects.create(
+			user=other_user,
+			name='Other Runner',
+			email='other@example.com',
+			phone='1234567891',
+		)
+		Registration.objects.create(member=other_member, event=self.event)
+
+		response = self.client.post(reverse('register_for_event'), {'event': self.event.id})
+
+		self.assertContains(response, 'Sorry, this event is full.')
+		self.assertEqual(Registration.objects.filter(event=self.event).count(), 1)
+
+
+class RegistrationOwnershipTests(TestCase):
+	def setUp(self):
+		self.owner = User.objects.create_user(username='owner', password='password')
+		self.owner_member = Member.objects.create(
+			user=self.owner,
+			name='Owner',
+			email='owner@example.com',
+			phone='1234567890',
+		)
+		other_user = User.objects.create_user(username='other', password='password')
+		Member.objects.create(
+			user=other_user,
+			name='Other',
+			email='other@example.com',
+			phone='1234567891',
+		)
+		self.event = Event.objects.create(
+			title='Club run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+			fee=Decimal('25.00'),
+		)
+		self.registration = Registration.objects.create(
+			member=self.owner_member,
+			event=self.event,
+			razorpay_order_id='order_test',
+		)
+		self.client.force_login(other_user)
+
+	@patch('events.views.razorpay.Client')
+	def test_other_member_gets_404_for_registration_owned_routes(self, client_class):
+		urls = [
+			reverse('registration_success', args=[self.registration.id]),
+			reverse('qr_code_image', args=[self.registration.id]),
+			reverse('initiate_payment', args=[self.registration.id]),
+			reverse('payment_success', args=[self.registration.id]),
+		]
+
+		for url in urls:
+			with self.subTest(url=url):
+				self.assertEqual(self.client.get(url).status_code, 404)
+
+		client_class.assert_not_called()
+
+
+class CheckinAccessTests(TestCase):
+	def setUp(self):
+		self.member_user = User.objects.create_user(username='runner', password='password')
+		member = Member.objects.create(
+			user=self.member_user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		self.staff_user = User.objects.create_user(
+			username='organizer', password='password', is_staff=True,
+		)
+		event = Event.objects.create(
+			title='Club run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+		)
+		self.registration = Registration.objects.create(member=member, event=event)
+
+	def test_non_staff_cannot_check_in(self):
+		self.client.force_login(self.member_user)
+
+		response = self.client.get(reverse('checkin', args=[self.registration.qr_code]))
+
+		self.assertEqual(response.status_code, 403)
+		self.assertFalse(Attendance.objects.filter(registration=self.registration).exists())
+
+	def test_staff_can_check_in(self):
+		self.client.force_login(self.staff_user)
+
+		response = self.client.get(reverse('checkin', args=[self.registration.qr_code]))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertTrue(Attendance.objects.filter(registration=self.registration).exists())
+
+
+class PaymentSignatureRejectionTests(TestCase):
+	def setUp(self):
+		self.user = User.objects.create_user(username='runner', password='password')
+		member = Member.objects.create(
+			user=self.user,
+			name='Runner',
+			email='runner@example.com',
+			phone='1234567890',
+		)
+		event = Event.objects.create(
+			title='Club run',
+			date='2026-10-01',
+			location='Hubli',
+			max_participants=10,
+			fee=Decimal('25.00'),
+		)
+		self.registration = Registration.objects.create(
+			member=member,
+			event=event,
+			razorpay_order_id='order_test',
+		)
+		self.client.force_login(self.user)
+
+	@patch('events.views.razorpay.Client')
+	def test_invalid_signature_does_not_mark_registration_paid(self, client_class):
+		client = client_class.return_value
+		client.utility.verify_payment_signature.side_effect = SignatureVerificationError(
+			'Invalid signature',
+		)
+
+		response = self.client.get(reverse('payment_success', args=[self.registration.id]), {
+			'razorpay_payment_id': 'payment_test',
+			'razorpay_order_id': 'order_test',
+			'razorpay_signature': 'invalid_signature',
+		})
+
+		self.assertEqual(response.status_code, 400)
+		self.assertContains(response, 'Payment verification failed.', status_code=400)
+		self.registration.refresh_from_db()
+		self.assertEqual(self.registration.payment_status, 'pending')
+		self.assertFalse(Payment.objects.filter(registration=self.registration).exists())
