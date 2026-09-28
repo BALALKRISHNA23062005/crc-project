@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-only-insecure-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['crc-project.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -112,7 +112,6 @@ RAZORPAY_KEY_SECRET = 'Q4T2EumaExvMixJvcZo9xs7z'
 # Near the top, keep DEBUG as is for now but make it configurable:
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # We'll tighten this after deployment
 
 # Update MIDDLEWARE - add whitenoise right after SecurityMiddleware:
 MIDDLEWARE = [
