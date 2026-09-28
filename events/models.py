@@ -1,6 +1,7 @@
 from django.db import models
 from members.models import Member
 
+
 class Event(models.Model):
     title = models.CharField(max_length=200)
     date = models.DateField()
@@ -23,6 +24,7 @@ class Registration(models.Model):
         default='pending'
     )
     qr_code = models.CharField(max_length=36, unique=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.qr_code:

@@ -63,6 +63,9 @@ def initiate_payment(request, registration_id):
         'payment_capture': 1
     })
 
+    registration.razorpay_order_id = order['id']
+    registration.save()
+
     return render(request, 'events/payment.html', {
         'registration': registration,
         'order_id': order['id'],
@@ -72,15 +75,31 @@ def initiate_payment(request, registration_id):
 
 def payment_success(request, registration_id):
     registration = Registration.objects.get(id=registration_id)
-    payment_id = request.GET.get('payment_id')
+    payment_id = request.GET.get('razorpay_payment_id', '')
+    order_id = request.GET.get('razorpay_order_id', '')
+    signature = request.GET.get('razorpay_signature', '')
 
-    Payment.objects.create(
-        registration=registration,
-        amount=100.00,
-        transaction_id=payment_id
-    )
-    registration.payment_status = 'paid'
-    registration.save()
+    if not order_id or order_id != registration.razorpay_order_id:
+        return HttpResponse("Invalid payment.", status=400)
+
+    client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    try:
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': order_id,
+            'razorpay_payment_id': payment_id,
+            'razorpay_signature': signature,
+        })
+    except razorpay.errors.SignatureVerificationError:
+        return HttpResponse("Payment verification failed.", status=400)
+
+    if registration.payment_status != 'paid':
+        Payment.objects.create(
+            registration=registration,
+            amount=100.00,
+            transaction_id=payment_id
+        )
+        registration.payment_status = 'paid'
+        registration.save()
 
     return render(request, 'events/payment_success.html', {'registration': registration})
 
